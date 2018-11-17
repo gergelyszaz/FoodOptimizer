@@ -6,6 +6,9 @@ import configparser
 config = configparser.ConfigParser()
 config.read('config.INI')
 
+def clean(l):
+    return list(filter(None,map(str.strip,l)))
+
 ######
 print('Scraping ' + config['DEFAULT']['url'])
 page = requests.get(config['DEFAULT']['url'])
@@ -15,10 +18,6 @@ foods = tree.xpath(config['XPATH']['foods'])
 prices = tree.xpath(config['XPATH']['prices'])
 infos = tree.xpath(config['XPATH']['infos'])
 
-map(str.strip,foods)
-map(str.strip,prices)
-map(str.strip,infos)
-
-print(foods)
-print(prices)
-print(infos)
+print(clean(foods))
+print(clean(prices))
+print(clean(infos))
