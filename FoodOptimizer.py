@@ -12,7 +12,7 @@ def clean(l):
 
 def getValues(s, l):
     # Because I hate you unconditionally
-    return [i.replace(s,'') for v in l for i in v if s in i]
+    return [int(i.replace(s,'')) for v in l for i in v if s in i]
 
 ###### Scrape data
 print('Scraping ' + config['DEFAULT']['url'])
@@ -37,16 +37,30 @@ fats=getValues('g zsír',infos)
 carbs=getValues('g szénh.',infos)
 prots=getValues('g fehérje',infos)
 
-kcals=[{foods[i]:kcals[i]} for i in range(0,len(foods)) ]
-carbs=[{foods[i]:carbs[i]} for i in range(0,len(foods)) ]
-prots=[{foods[i]:prots[i]} for i in range(0,len(foods)) ]
-fats=[{foods[i]:fats[i]} for i in range(0,len(foods)) ]
+foods = [foods[i][:16]+str(i) for i in range(0,len(foods))]
 
-print(kcals)
-print(fats)
-print(carbs)
-print(prots)
+kcals=dict((foods[i],kcals[i]) for i in range(0,len(foods))) 
+carbs=dict((foods[i],carbs[i]) for i in range(0,len(foods)))
+prots=dict((foods[i],prots[i]) for i in range(0,len(foods)))
+fats=dict((foods[i],fats[i]) for i in range(0,len(foods)))
+
+#print(kcals)
+#print(fats)
+#print(carbs)
+#print(prots)
+
+# Solve problem
 
 
 
+prob = LpProblem("E-Food problem", LpMaximize)
+Lp_vars = LpVariable.dicts("Food",foods,cat='Binary')
+prob += lpSum([prots[i]*Lp_vars[i] for i in foods]), "PROTEIN POWAAAA"
+prob += lpSum([kcals[i]*Lp_vars[i] for i in foods]) <= 2000,"CalorieRequirement"
+prob.writeLP("EFoodModel.lp")
+
+prob.solve()
+print("Status:", LpStatus[prob.status])
+
+print([v.name for v in prob.variables() if  v.varValue>0])
 
