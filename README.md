@@ -11,6 +11,11 @@ In requirements.txt
 
 Install using ```pip install -r requirements.txt```
 
+## Configuration
+In config.INI
+
+Overwrite the values as needed.
+
 ## Running
 
 ``` 
