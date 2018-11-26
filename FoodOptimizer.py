@@ -30,7 +30,7 @@ data = {}
 
 ###### Parse values
 foods = tree.xpath(site['food.xpath'])
-data['food'] = [f.strip() for f in foods if f.strip()]
+data['food'] = [f.text.strip() for f in foods if f.text.strip()]
 
 print(data['food'])
 
@@ -41,8 +41,8 @@ for prop in site['properties'].split('|'):
 
     print(regex)
     data[prop] = [
-        -999999999 if v is None else v.group(1) for v in
-        [re.search(regex, info) for info in tree.xpath(xpath)] if v
+        v.group(1) if v else -9999 for v in
+        [re.search(regex, info.text) if info.text else '' for info in tree.xpath(xpath)]
     ]
 
     print(data[prop])
@@ -54,13 +54,6 @@ for prop in site['properties'].split('|'):
 
 print(data)
 
-
-infos = list(map(lambda info: list(map(str.strip, info.split(','))), infos))
-kcals = getValues(' kcal', infos)
-fats = getValues('g zsír', infos)
-carbs = getValues('g szénh.', infos)
-prots = getValues('g fehérje', infos)
-prices = [int(p.replace(' FT', '')) for p in prices]
 
 foods = [foods[i][:16]+str(i) for i in range(0, len(foods))]
 
