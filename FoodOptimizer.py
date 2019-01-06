@@ -1,9 +1,10 @@
-from lxml import html
+from lxml import html, etree
 import requests
 import configparser
 from pulp import *
 import sys
 import re
+import json
 
 ###### Get configuration
 
@@ -11,9 +12,9 @@ if(len(sys.argv) != 2):
     print('Missing parameter: name of the site to process!')
     exit(1)
 
-
 config = configparser.ConfigParser()
 config.read('config.INI', 'UTF-8')
+
 
 if(not config.has_section(sys.argv[1])):
     print('No section found for "{}" in config!'.format(sys.argv[1]))
@@ -21,39 +22,68 @@ if(not config.has_section(sys.argv[1])):
 
 site = config[sys.argv[1]]
 
-###### Scrape data
-print('Scraping ' + site['url'])
-page = requests.get(site['url'])
-tree = html.fromstring(page.content)
+# returns nil if url is not available
+def getFoodData(url):
+    data = {}
+    page = requests.get(url)
+    print(page.status_code)
+    print(page.text)
 
-data = {}
+    if page.status_code != 200 or not page.text:
+        return nil
+    tree = html.fromstring(page.text)
 
-###### Parse values
-foods = tree.xpath(site['food.xpath'])
-data['food'] = [f.text.strip() for f in foods if f.text.strip()]
+    ###### Parse values
 
-print(data['food'])
+    data['full'] = page.content
+    data['name'] = tree.xpath(site['food.xpath'])[0]
+    print(data['name'])
+    data['category'] = data['name'].split(' ', 1)[0]
+    print(data['category'])
 
-for prop in site['properties'].split('|'):
-    print(prop)
-    xpath = site['{}.xpath'.format(prop)]
-    regex = site['{}.regex'.format(prop)]
+    # Parse properties
+    for prop in site['properties'].split('|'):
+        print(prop)
+        xpath = site['{}.xpath'.format(prop)]
+        regex = site['{}.regex'.format(prop)]
+        #print(xpath)
+        #print(regex)
+        
+        data[prop] = [
+            v.group(1) if v else -9999 for v in
+            [re.search(regex, info.text) if info.text else '' for info in tree.xpath(xpath)]
+        ][0]
 
-    print(regex)
-    data[prop] = [
-        v.group(1) if v else -9999 for v in
-        [re.search(regex, info.text) if info.text else '' for info in tree.xpath(xpath)]
-    ]
+        print(data[prop])
+    
+    return tree
 
-    print(data[prop])
 
-    if(len(data['food']) != len(data[prop])):
-        print("The number of {} do not match: {} out of {}".format(
-            prop, len(data[prop]), len(data['food'])))
-        exit(1)
+def populateDataSet():
+
+    ###### Scrape data
+    print('Scraping ' + site['url'])
+    #page = requests.get(site['url'])
+    #tree = html.fromstring(page.content)
+    for date in site['date'].split('|'):
+        print(date)
+        for category in site['category'].split('|'):
+            print(category)
+            url = site['food.url'].replace('[category]', category).replace('[date]',date)
+            print(url)
+            data = getFoodData(url)
+            print(data)
+        
+        
+        
+    data = {}
+
+    return data
+
+data = populateDataSet()
 
 print(data)
-
+exit(0)
 
 foods = [foods[i][:16]+str(i) for i in range(0, len(foods))]
 
