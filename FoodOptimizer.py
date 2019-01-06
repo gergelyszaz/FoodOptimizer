@@ -30,12 +30,12 @@ def getFoodData(url):
     print(page.text)
 
     if page.status_code != 200 or not page.text:
-        return nil
+        return None
     tree = html.fromstring(page.text)
 
     ###### Parse values
 
-    data['full'] = page.content
+    #data['full'] = page.content
     data['name'] = tree.xpath(site['food.xpath'])[0]
     print(data['name'])
     data['category'] = data['name'].split(' ', 1)[0]
@@ -56,7 +56,7 @@ def getFoodData(url):
 
         print(data[prop])
     
-    return tree
+    return data
 
 
 def populateDataSet():
@@ -72,7 +72,14 @@ def populateDataSet():
             url = site['food.url'].replace('[category]', category).replace('[date]',date)
             print(url)
             data = getFoodData(url)
-            print(data)
+
+            if data:
+                filename = data['name'] + '.json'
+                print(filename)
+                with open(filename, 'w') as outfile:
+                    outfile.write(str(data))
+                
+
         
         
         
